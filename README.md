@@ -138,7 +138,3 @@ curl -X DELETE http://localhost:8080/api/employees/1
 | Integration Tests | JUnit + MockMvc          | `mvn verify`                    |
 | Coverage          | JaCoCo                   | `target/site/jacoco/index.html` |
 
-
-
-Would you like me to add **badges (build, test coverage, license, version)** at the top like a GitHub pro project?
-```
