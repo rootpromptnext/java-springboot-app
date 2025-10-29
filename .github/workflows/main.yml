@@ -248,3 +248,31 @@ jobs:
           docker push $ECR_URI:${{ env.SHORT_SHA }}
           docker push $ECR_URI:latest
           
+      # DAST: OWASP ZAP CLI Scan
+      - name: Install OWASP ZAP CLI
+        run: |
+          sudo apt update
+          sudo apt install -y snapd
+          sudo snap install zaproxy --classic
+          echo "ZAP Installed Successfully"
+          zaproxy -version
+
+      - name: Start Spring Boot App
+        run: |
+          nohup java -jar target/app.jar > app.log 2>&1 &
+          sleep 15
+          curl -I http://localhost:8080 || (echo "App failed to start" && exit 1)
+
+      - name: Run OWASP ZAP Baseline Scan
+        run: |
+          mkdir -p zap-reports
+          zaproxy -cmd \
+            -quickurl http://localhost:8080 \
+            -quickprogress \
+            -quickout zap-reports/zap_report.html || true
+
+      - name: Upload ZAP Report
+        uses: actions/upload-artifact@v4
+        with:
+          name: zap-dast-report
+          path: zap-reports/zap_report.html
