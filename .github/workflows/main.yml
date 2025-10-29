@@ -1,0 +1,250 @@
+name: CI/CD Spring Boot Secure Pipeline
+
+on:
+  workflow_dispatch:      
+
+jobs:
+  build-and-publish:
+    runs-on: ubuntu-latest
+    env:
+      AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+      AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+      AWS_ACCOUNT_ID: ${{ secrets.AWS_ACCOUNT_ID }}
+      GITHUB_TOKEN: ${{ secrets.MAVEN_DEPLOY_TOKEN }}
+      SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+      SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
+      NVD_API_KEY: ${{ secrets.NVD_API_KEY }}
+      OSSINDEX_USERNAME: ${{ secrets.OSSINDEX_USERNAME }}
+      OSSINDEX_PASSWORD: ${{ secrets.OSSINDEX_PASSWORD }}     
+
+    steps:
+      # Checkout Code
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      # Set up Java
+      - name: Set up Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 17
+          
+      - name: Clear old Maven cache
+        run: |
+          rm -rf ~/.m2/repository/org/springframework
+          rm -rf ~/.m2/repository/org/apache/tomcat
+
+      - name: Install TruffleHog CLI
+        run: |
+          wget https://github.com/trufflesecurity/trufflehog/releases/download/v3.90.11/trufflehog_3.90.11_linux_amd64.tar.gz -O trufflehog.tar.gz
+          tar -xvf trufflehog.tar.gz
+          chmod +x trufflehog
+          mkdir -p ~/.local/bin
+          mv trufflehog ~/.local/bin/
+      
+      - name: Add TruffleHog to PATH
+        run: echo "$HOME/.local/bin" >> $GITHUB_PATH
+
+      - name: Run TruffleHog Secret Scan
+        run: |
+          echo "Running TruffleHog secret scan..."
+          trufflehog filesystem . > scan_output.log 2>&1 || true
+          # Check for secrets
+          if grep -q "Secrets detected!" scan_output.log; then
+            echo "Secrets detected! Please remove hardcoded credentials or API keys."
+            cat scan_output.log
+            exit 1
+          else
+            echo "No secrets found. Proceeding to next stage..."
+            cat scan_output.log
+          fi
+
+      # Build, Test, and Sonar Analysis with JaCoCo + CLI Scanner
+      # Build & Test
+      - name: Build & Test (Maven)
+        run: mvn clean compile test verify -B
+      
+      # SonarCloud Analysis |Make sur you have manually created project in sonarcloud.io | Project key in Project Information
+      # Administration > Analysis Method - Disable Automatic to avoid "ERROR You are running CI analysis while Automatic Analysis is enabled. Please consider disabling one or the other"
+      - name: SonarCloud Analysis (JaCoCo)
+        run: |
+          SONAR_SCANNER_VERSION=6.2.1.4610
+          wget -q https://binaries.sonarsource.com/Distribution/sonar-scanner-cli/sonar-scanner-cli-${SONAR_SCANNER_VERSION}-linux-x64.zip
+          unzip -q sonar-scanner-cli-${SONAR_SCANNER_VERSION}-linux-x64.zip
+          export PATH=$PATH:$(pwd)/sonar-scanner-${SONAR_SCANNER_VERSION}-linux-x64/bin
+          sonar-scanner -X \
+            -Dsonar.projectKey=rootpromptnext_springboot-demo \
+            -Dsonar.organization=rootpromptnext \
+            -Dsonar.host.url=https://sonarcloud.io \
+            -Dsonar.login=${{ secrets.SONAR_TOKEN }} \
+            -Dsonar.sources=src/main/java \
+            -Dsonar.tests=src/test/java \
+            -Dsonar.java.binaries=target/classes \
+            -Dsonar.junit.reportPaths=target/surefire-reports \
+            -Dsonar.coverage.jacoco.xmlReportPaths=target/site/jacoco/jacoco.xml 
+
+      # Snyk Scan - SCA
+      - name: Download Snyk CLI
+        run: |
+          wget -O snyk https://github.com/snyk/cli/releases/download/v1.1294.3/snyk-linux
+          chmod +x snyk
+          sudo mv snyk /usr/local/bin/snyk
+      
+      - name: Authenticate Snyk CLI
+        run: snyk auth $SNYK_TOKEN
+        env:
+          SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
+      
+      - name: Run Snyk scan (SCA)
+        run: snyk monitor --all-projects
+
+      # OWASP Dependency-Check
+      - name: Install OWASP Dependency-Check CLI
+        run: |
+          wget https://github.com/jeremylong/DependencyCheck/releases/download/v12.1.0/dependency-check-12.1.0-release.zip
+          unzip dependency-check-12.1.0-release.zip -d $HOME/dependency-check
+          chmod +x $HOME/dependency-check/dependency-check/bin/dependency-check.sh
+          echo "$HOME/dependency-check/dependency-check/bin" >> $GITHUB_PATH
+      
+      - name: Run OWASP Dependency-Check Scan
+        run: |
+          mkdir -p dependency-check-report
+          $HOME/dependency-check/dependency-check/bin/dependency-check.sh \
+            --project "springboot-demo" \
+            --scan . \
+            --format HTML \
+            --out dependency-check-report \
+            --nvdApiKey ${{ secrets.NVD_API_KEY }} \
+            --ossIndexUser ${{ secrets.OSSINDEX_USERNAME }} \
+            --ossIndexPassword ${{ secrets.OSSINDEX_PASSWORD }} || true
+          
+      - name: Upload Dependency Check Report
+        uses: actions/upload-artifact@v4
+        with:
+          name: dependency-check-report
+          path: dependency-check-report
+
+      # Build, Compile, and Test with Maven
+      - name: Build & Test (Maven)
+        run: |
+          mvn clean compile test verify -B
+
+      # Rename JAR
+      - name: Rename JAR for Docker
+        run: |
+          mv target/*-SNAPSHOT.jar target/app.jar || mv target/*.jar target/app.jar
+
+      # Docker Build & Push
+      - name: Log in to GitHub Container Registry
+        run: |
+          echo "$GITHUB_TOKEN" | docker login ghcr.io -u rootpromptnext --password-stdin
+
+      # Build Docker image - GHCR
+      - name: Build Docker image - GHCR
+        run: |
+          SHORT_SHA=$(echo $GITHUB_SHA | cut -c1-7)
+          echo "SHORT_SHA=$SHORT_SHA" >> $GITHUB_ENV
+          docker build -t ghcr.io/rootpromptnext/springboot-demo:$SHORT_SHA \
+                       -t ghcr.io/rootpromptnext/springboot-demo:latest .
+
+      # Install Trivy CLI
+      - name: Install Trivy - GHCR
+        run: |
+          wget https://raw.githubusercontent.com/aquasecurity/trivy/main/contrib/install.sh
+          bash install.sh
+          mkdir -p $HOME/.local/bin
+          mv ./bin/trivy $HOME/.local/bin/
+          echo "$HOME/.local/bin" >> $GITHUB_PATH
+          trivy --version
+          
+      # Trivy Scan - GHCR
+      - name: Run Trivy scan and save report - GHCR
+        run: |
+          trivy image \
+            --format json \
+            --output trivy-ghcr-report.json \
+            --severity CRITICAL,HIGH \
+            ghcr.io/rootpromptnext/springboot-demo:${{ env.SHORT_SHA }}
+      
+      - name: Upload Trivy Report - GHCR
+        uses: actions/upload-artifact@v4
+        with:
+          name: trivy-ghcr-report
+          path: trivy-ghcr-report.json
+          
+      # Push Docker Images - GHCR
+      - name: Push Docker images
+        run: |
+          docker push ghcr.io/rootpromptnext/springboot-demo:${{ env.SHORT_SHA }}
+          docker push ghcr.io/rootpromptnext/springboot-demo:latest
+
+      # Build Docker Image - Docker Hub
+      - name: Build Docker image (Docker Hub)
+        run: |
+          docker build -t ${{ secrets.DOCKERHUB_USER }}/springboot-demo:${{ env.SHORT_SHA }} \
+                       -t ${{ secrets.DOCKERHUB_USER }}/springboot-demo:latest .
+
+      # Trivy Scan - Docker Hub
+      - name: Run Trivy scan on Docker Hub image
+        run: |
+          trivy image \
+            --format json \
+            --output trivy-dockerhub-report.json \
+            --severity CRITICAL,HIGH \
+            ${{ secrets.DOCKERHUB_USER }}/springboot-demo:${{ env.SHORT_SHA }}
+      
+      - name: Upload Trivy Docker Hub Report
+        uses: actions/upload-artifact@v4
+        with:
+          name: trivy-dockerhub-report
+          path: trivy-dockerhub-report.json
+      
+      # Push Docker Images - Docker Hub
+      - name: Push Docker images to Docker Hub
+        run: |
+          echo "${{ secrets.DOCKERHUB_PASS }}" | docker login -u ${{ secrets.DOCKERHUB_USER }} --password-stdin
+          docker push ${{ secrets.DOCKERHUB_USER }}/springboot-demo:${{ env.SHORT_SHA }}
+          docker push ${{ secrets.DOCKERHUB_USER }}/springboot-demo:latest
+
+      # aws ecr describe-repositories --repository-names springboot-demo || aws ecr create-repository --repository-name springboot-demo
+      # aws ecr delete-repository --repository-name springboot-demo --force          
+
+      # Configure AWS Credentials for ECR
+      - name: Configure AWS Credentials
+        uses: aws-actions/configure-aws-credentials@v2
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: us-east-1   # change to your region
+      
+      # Build Docker Image - ECR
+      - name: Build Docker image (ECR)
+        run: |
+          ECR_URI=${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.us-east-1.amazonaws.com/springboot-demo
+          docker build -t $ECR_URI:${{ env.SHORT_SHA }} \
+                       -t $ECR_URI:latest .
+      
+      # Trivy Scan - ECR
+      - name: Run Trivy scan on ECR image
+        run: |
+          ECR_URI=${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.us-east-1.amazonaws.com/springboot-demo
+          trivy image \
+            --format json \
+            --output trivy-ecr-report.json \
+            --severity CRITICAL,HIGH \
+            $ECR_URI:${{ env.SHORT_SHA }}
+      
+      - name: Upload Trivy ECR Report
+        uses: actions/upload-artifact@v4
+        with:
+          name: trivy-ecr-report
+          path: trivy-ecr-report.json
+  
+      # Push Docker Images - ECR
+      - name: Push Docker images to ECR
+        run: |
+          ECR_URI=${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.us-east-1.amazonaws.com/springboot-demo
+          aws ecr get-login-password --region us-east-1 | docker login --username AWS --password-stdin $ECR_URI
+          docker push $ECR_URI:${{ env.SHORT_SHA }}
+          docker push $ECR_URI:latest
+          
