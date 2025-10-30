@@ -248,30 +248,32 @@ jobs:
           docker push $ECR_URI:${{ env.SHORT_SHA }}
           docker push $ECR_URI:latest
           
-      # OWASP ZAP DAST Scan (Docker-based)
+      # OWASP ZAP DAST Scan using official GitHub Action
       - name: Start Spring Boot App
         run: |
-          nohup java -jar target/app.jar > app.log 2>&1 &
+          nohup java -jar target/app.jar --server.port=8090 > app.log 2>&1 &
           sleep 15
-          curl -I http://localhost:8080 || (echo "App failed to start" && exit 1)
+          curl -I http://localhost:8090 || (echo "App failed to start" && exit 1)
       
-      # Run OWASP ZAP Baseline Scan using official Docker image
-      - name: Run OWASP ZAP DAST Scan
-        timeout-minutes: 5
-        run: |
-          mkdir -p zap-reports
-          echo "Starting ZAP Docker scan..."
-          docker run --rm -v $(pwd):/zap/wrk -t owasp/zap2docker-stable \
-            zap-baseline.py \
-            -t http://host.docker.internal:8080 \
-            -r zap_report.html \
-            -m 3
-          mv zap_report.html zap-reports/zap_report.html
-          ls -l zap-reports
+      # Run OWASP ZAP Full Scan
+      - name: OWASP ZAP Full Scan
+        uses: zaproxy/action-full-scan@v0.13.0
+        with:
+          target: 'http://localhost:8090'
+          cmd_options: '-m 3'             # Limit to 3 minutes (optional)
+          allow_issue_writing: false      # Prevent ZAP from creating GitHub issues
+          artifact_name: 'zap-dast-report'
+          rules_file_name: '.zap/rules.tsv'  # Optional: custom rules
+          token: ${{ secrets.GITHUB_TOKEN }}
       
-      # Upload the ZAP Report as artifact
+      # Upload ZAP report manually (optional)
       - name: Upload ZAP Report
+        if: always()
         uses: actions/upload-artifact@v4
+        with:
+          name: zap-dast-report
+          path: zap-wrk/report_html.html
+
         with:
           name: zap-dast-report
           path: zap-reports/zap_report.html
