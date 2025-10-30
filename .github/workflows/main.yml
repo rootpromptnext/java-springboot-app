@@ -247,8 +247,8 @@ jobs:
           aws ecr get-login-password --region us-east-1 | docker login --username AWS --password-stdin $ECR_URI
           docker push $ECR_URI:${{ env.SHORT_SHA }}
           docker push $ECR_URI:latest
-            
-      # DAST: OWASP ZAP CLI Scan
+          
+      # OWASP ZAP Scan      
       - name: Install OWASP ZAP CLI (Full CLI Version)
         run: |
           sudo apt update
@@ -256,7 +256,11 @@ jobs:
           wget https://github.com/zaproxy/zaproxy/releases/download/v2.15.0/ZAP_2_15_0_unix.sh
           sudo bash ZAP_2_15_0_unix.sh -q
           echo "ZAP Installed Successfully"
-          /usr/local/zaproxy/zap.sh -version
+      
+          # Find where zap.sh was installed
+          ZAP_PATH=$(find / -type f -name "zap.sh" 2>/dev/null | head -n 1)
+          echo "Found ZAP at: $ZAP_PATH"
+          echo "ZAP_PATH=$ZAP_PATH" >> $GITHUB_ENV
       
       - name: Start Spring Boot App
         run: |
@@ -267,7 +271,8 @@ jobs:
       - name: Run OWASP ZAP Quick Scan
         run: |
           mkdir -p zap-reports
-          /usr/local/zaproxy/zap.sh -cmd \
+          echo "Using ZAP from: $ZAP_PATH"
+          bash "$ZAP_PATH" -cmd \
             -quickurl http://localhost:8080 \
             -quickout zap-reports/zap_report.html \
             -quickprogress || true
@@ -278,4 +283,5 @@ jobs:
         with:
           name: zap-dast-report
           path: zap-reports/zap_report.html
+
 
