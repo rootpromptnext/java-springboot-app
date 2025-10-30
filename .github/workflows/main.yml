@@ -206,8 +206,8 @@ jobs:
           docker push ${{ secrets.DOCKERHUB_USER }}/springboot-demo:${{ env.SHORT_SHA }}
           docker push ${{ secrets.DOCKERHUB_USER }}/springboot-demo:latest
 
-      # aws ecr describe-repositories --repository-names springboot-demo || aws ecr create-repository --repository-name springboot-demo
-      # aws ecr delete-repository --repository-name springboot-demo --force          
+      # aws ecr describe-repositories --repository-names java-springboot-app || aws ecr create-repository --repository-name java-springboot-app
+      # aws ecr delete-repository --repository-name java-springboot-app --force          
 
       # Configure AWS Credentials for ECR
       - name: Configure AWS Credentials
