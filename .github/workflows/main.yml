@@ -35,45 +35,31 @@ jobs:
           rm -rf ~/.m2/repository/org/apache/tomcat
           pwd ; ls
 
-      #- name: Scan for hardcoded secrets using TruffleHog
-      #  uses: trufflesecurity/trufflehog@v3.90.0
-      #  with:
-      #    path: .
-
-      # TruffleHog Secret Scanning
-      - name: Scan for hardcoded secrets using TruffleHog
-        uses: trufflesecurity/trufflehog@v3.90.0
-        with:
-          scan: filesystem
-          path: .
-          extra_args: >-
-            --no-verification
-            --json
-            
-      #- name: Install TruffleHog CLI
-      #  run: |
-      #    wget https://github.com/trufflesecurity/trufflehog/releases/download/v3.90.11/trufflehog_3.90.11_linux_amd64.tar.gz -O trufflehog.tar.gz
-      #    tar -xvf trufflehog.tar.gz
-      #    chmod +x trufflehog
-      #    mkdir -p ~/.local/bin
-      #    mv trufflehog ~/.local/bin/
+      # TruffleHog Secret Scanning          
+      - name: Install TruffleHog CLI
+        run: |
+          wget https://github.com/trufflesecurity/trufflehog/releases/download/v3.90.11/trufflehog_3.90.11_linux_amd64.tar.gz -O trufflehog.tar.gz
+          tar -xvf trufflehog.tar.gz
+          chmod +x trufflehog
+          mkdir -p ~/.local/bin
+          mv trufflehog ~/.local/bin/
       
-      #- name: Add TruffleHog to PATH
-      #  run: echo "$HOME/.local/bin" >> $GITHUB_PATH
+      - name: Add TruffleHog to PATH
+        run: echo "$HOME/.local/bin" >> $GITHUB_PATH
 
-      #- name: Run TruffleHog Secret Scan
-      #  run: |
-      #    echo "Running TruffleHog secret scan..."
-      #    trufflehog filesystem . > scan_output.log 2>&1 || true
-      #    # Check for secrets
-      #    if grep -q "Secrets detected!" scan_output.log; then
-      #      echo "Secrets detected! Please remove hardcoded credentials or API keys."
-      #      cat scan_output.log
-      #      exit 1
-      #    else
-      #      echo "No secrets found. Proceeding to next stage..."
-      #      cat scan_output.log
-      #    fi
+      - name: Run TruffleHog Secret Scan
+        run: |
+          echo "Running TruffleHog secret scan..."
+          trufflehog filesystem . > scan_output.log 2>&1 || true
+          # Check for secrets
+          if grep -q "Secrets detected!" scan_output.log; then
+            echo "Secrets detected! Please remove hardcoded credentials or API keys."
+            cat scan_output.log
+            exit 1
+          else
+            echo "No secrets found. Proceeding to next stage..."
+            cat scan_output.log
+          fi
 
       # Build, Test, and Sonar Analysis with JaCoCo + CLI Scanner
       # Build & Test
