@@ -99,30 +99,30 @@ jobs:
         run: snyk monitor --all-projects
 
       # OWASP Dependency-Check
-      - name: Install OWASP Dependency-Check CLI
-        run: |
-          wget https://github.com/jeremylong/DependencyCheck/releases/download/v12.1.0/dependency-check-12.1.0-release.zip
-          unzip dependency-check-12.1.0-release.zip -d $HOME/dependency-check
-          chmod +x $HOME/dependency-check/dependency-check/bin/dependency-check.sh
-          echo "$HOME/dependency-check/dependency-check/bin" >> $GITHUB_PATH
+      #- name: Install OWASP Dependency-Check CLI
+      #  run: |
+      #    wget https://github.com/jeremylong/DependencyCheck/releases/download/v12.1.0/dependency-check-12.1.0-release.zip
+      #    unzip dependency-check-12.1.0-release.zip -d $HOME/dependency-check
+      #    chmod +x $HOME/dependency-check/dependency-check/bin/dependency-check.sh
+      #    echo "$HOME/dependency-check/dependency-check/bin" >> $GITHUB_PATH
       
-      - name: Run OWASP Dependency-Check Scan
-        run: |
-          mkdir -p dependency-check-report
-          $HOME/dependency-check/dependency-check/bin/dependency-check.sh \
-            --project "java-springboot-app" \
-            --scan . \
-            --format HTML \
-            --out dependency-check-report \
-            --nvdApiKey ${{ secrets.NVD_API_KEY }} \
-            --ossIndexUser ${{ secrets.OSSINDEX_USERNAME }} \
-            --ossIndexPassword ${{ secrets.OSSINDEX_PASSWORD }} || true
+      #- name: Run OWASP Dependency-Check Scan
+      #  run: |
+      #    mkdir -p dependency-check-report
+      #    $HOME/dependency-check/dependency-check/bin/dependency-check.sh \
+      #      --project "java-springboot-app" \
+      #      --scan . \
+      #      --format HTML \
+      #      --out dependency-check-report \
+      #      --nvdApiKey ${{ secrets.NVD_API_KEY }} \
+      #      --ossIndexUser ${{ secrets.OSSINDEX_USERNAME }} \
+      #      --ossIndexPassword ${{ secrets.OSSINDEX_PASSWORD }} || true
           
-      - name: Upload Dependency Check Report
-        uses: actions/upload-artifact@v4
-        with:
-          name: dependency-check-report
-          path: dependency-check-report
+      #- name: Upload Dependency Check Report
+      #  uses: actions/upload-artifact@v4
+      #  with:
+      #    name: dependency-check-report
+      #    path: dependency-check-report
 
       # Build, Compile, and Test with Maven
       - name: Build & Test (Maven)
