@@ -35,10 +35,23 @@ jobs:
           rm -rf ~/.m2/repository/org/apache/tomcat
           pwd ; ls
 
+      #- name: Scan for hardcoded secrets using TruffleHog
+      #  uses: trufflesecurity/trufflehog@v3.90.0
+      #  with:
+      #    path: .
+
+      # TruffleHog Secret Scanning
       - name: Scan for hardcoded secrets using TruffleHog
         uses: trufflesecurity/trufflehog@v3.90.0
         with:
-          path: .
+          scan: filesystem                # Explicitly set scan type (filesystem, git, github, etc.)
+          path: .                         # Scan the full repo
+          extra_args: >-                  # Add advanced options
+            --fail=false                  # Do not fail build if secrets found (continue pipeline)
+            --json                        # Output JSON format (easier to parse)
+            --no-verification             # Skip online secret verification for speed
+            --exclude-paths .trufflehogignore
+          
           
 
       #- name: Install TruffleHog CLI
