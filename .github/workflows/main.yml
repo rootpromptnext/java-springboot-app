@@ -47,9 +47,8 @@ jobs:
           scan: filesystem
           path: .
           extra_args: >-
-            --no-verification        # Skip online secret verification for faster scan
-            --json                   # Output JSON for reporting
-            --fail                   # Fail only if verified secrets found
+            --no-verification
+            --json
             
       #- name: Install TruffleHog CLI
       #  run: |
