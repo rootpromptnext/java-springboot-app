@@ -33,6 +33,7 @@ jobs:
         run: |
           rm -rf ~/.m2/repository/org/springframework
           rm -rf ~/.m2/repository/org/apache/tomcat
+          pwd ; ls
 
       - name: Scan for hardcoded secrets using TruffleHog
         uses: trufflesecurity/trufflehog@v3.90.0
