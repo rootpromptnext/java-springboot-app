@@ -73,7 +73,7 @@ jobs:
           unzip -q sonar-scanner-cli-${SONAR_SCANNER_VERSION}-linux-x64.zip
           export PATH=$PATH:$(pwd)/sonar-scanner-${SONAR_SCANNER_VERSION}-linux-x64/bin
           sonar-scanner -X \
-            -Dsonar.projectKey=rootpromptnext_springboot-demo \
+            -Dsonar.projectKey=rootpromptnext_java-springboot-app \
             -Dsonar.organization=rootpromptnext \
             -Dsonar.host.url=https://sonarcloud.io \
             -Dsonar.login=${{ secrets.SONAR_TOKEN }} \
@@ -110,7 +110,7 @@ jobs:
         run: |
           mkdir -p dependency-check-report
           $HOME/dependency-check/dependency-check/bin/dependency-check.sh \
-            --project "springboot-demo" \
+            --project "java-springboot-app" \
             --scan . \
             --format HTML \
             --out dependency-check-report \
@@ -144,8 +144,8 @@ jobs:
         run: |
           SHORT_SHA=$(echo $GITHUB_SHA | cut -c1-7)
           echo "SHORT_SHA=$SHORT_SHA" >> $GITHUB_ENV
-          docker build -t ghcr.io/rootpromptnext/springboot-demo:$SHORT_SHA \
-                       -t ghcr.io/rootpromptnext/springboot-demo:latest .
+          docker build -t ghcr.io/rootpromptnext/java-springboot-app:$SHORT_SHA \
+                       -t ghcr.io/rootpromptnext/java-springboot-app:latest .
 
       # Install Trivy CLI
       - name: Install Trivy - GHCR
@@ -164,7 +164,7 @@ jobs:
             --format json \
             --output trivy-ghcr-report.json \
             --severity CRITICAL,HIGH \
-            ghcr.io/rootpromptnext/springboot-demo:${{ env.SHORT_SHA }}
+            ghcr.io/rootpromptnext/java-springboot-app:${{ env.SHORT_SHA }}
       
       - name: Upload Trivy Report - GHCR
         uses: actions/upload-artifact@v4
@@ -175,14 +175,14 @@ jobs:
       # Push Docker Images - GHCR
       - name: Push Docker images
         run: |
-          docker push ghcr.io/rootpromptnext/springboot-demo:${{ env.SHORT_SHA }}
-          docker push ghcr.io/rootpromptnext/springboot-demo:latest
+          docker push ghcr.io/rootpromptnext/java-springboot-app:${{ env.SHORT_SHA }}
+          docker push ghcr.io/rootpromptnext/java-springboot-app:latest
 
       # Build Docker Image - Docker Hub
       - name: Build Docker image (Docker Hub)
         run: |
-          docker build -t ${{ secrets.DOCKERHUB_USER }}/springboot-demo:${{ env.SHORT_SHA }} \
-                       -t ${{ secrets.DOCKERHUB_USER }}/springboot-demo:latest .
+          docker build -t ${{ secrets.DOCKERHUB_USER }}/java-springboot-app:${{ env.SHORT_SHA }} \
+                       -t ${{ secrets.DOCKERHUB_USER }}/java-springboot-app:latest .
 
       # Trivy Scan - Docker Hub
       - name: Run Trivy scan on Docker Hub image
@@ -191,7 +191,7 @@ jobs:
             --format json \
             --output trivy-dockerhub-report.json \
             --severity CRITICAL,HIGH \
-            ${{ secrets.DOCKERHUB_USER }}/springboot-demo:${{ env.SHORT_SHA }}
+            ${{ secrets.DOCKERHUB_USER }}/java-springboot-app:${{ env.SHORT_SHA }}
       
       - name: Upload Trivy Docker Hub Report
         uses: actions/upload-artifact@v4
@@ -203,8 +203,8 @@ jobs:
       - name: Push Docker images to Docker Hub
         run: |
           echo "${{ secrets.DOCKERHUB_PASS }}" | docker login -u ${{ secrets.DOCKERHUB_USER }} --password-stdin
-          docker push ${{ secrets.DOCKERHUB_USER }}/springboot-demo:${{ env.SHORT_SHA }}
-          docker push ${{ secrets.DOCKERHUB_USER }}/springboot-demo:latest
+          docker push ${{ secrets.DOCKERHUB_USER }}/java-springboot-app:${{ env.SHORT_SHA }}
+          docker push ${{ secrets.DOCKERHUB_USER }}/java-springboot-app:latest
 
       # aws ecr describe-repositories --repository-names java-springboot-app || aws ecr create-repository --repository-name java-springboot-app
       # aws ecr delete-repository --repository-name java-springboot-app --force          
@@ -220,14 +220,14 @@ jobs:
       # Build Docker Image - ECR
       - name: Build Docker image (ECR)
         run: |
-          ECR_URI=${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.us-east-1.amazonaws.com/springboot-demo
+          ECR_URI=${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.us-east-1.amazonaws.com/java-springboot-app
           docker build -t $ECR_URI:${{ env.SHORT_SHA }} \
                        -t $ECR_URI:latest .
       
       # Trivy Scan - ECR
       - name: Run Trivy scan on ECR image
         run: |
-          ECR_URI=${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.us-east-1.amazonaws.com/springboot-demo
+          ECR_URI=${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.us-east-1.amazonaws.com/java-springboot-app
           trivy image \
             --format json \
             --output trivy-ecr-report.json \
@@ -243,7 +243,7 @@ jobs:
       # Push Docker Images - ECR
       - name: Push Docker images to ECR
         run: |
-          ECR_URI=${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.us-east-1.amazonaws.com/springboot-demo
+          ECR_URI=${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.us-east-1.amazonaws.com/java-springboot-app
           aws ecr get-login-password --region us-east-1 | docker login --username AWS --password-stdin $ECR_URI
           docker push $ECR_URI:${{ env.SHORT_SHA }}
           docker push $ECR_URI:latest
