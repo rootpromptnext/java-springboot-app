@@ -273,8 +273,3 @@ jobs:
         with:
           name: zap-dast-report
           path: zap-wrk/report_html.html
-
-        with:
-          name: zap-dast-report
-          path: zap-reports/zap_report.html
-
