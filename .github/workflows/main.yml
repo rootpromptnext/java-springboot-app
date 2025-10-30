@@ -44,16 +44,13 @@ jobs:
       - name: Scan for hardcoded secrets using TruffleHog
         uses: trufflesecurity/trufflehog@v3.90.0
         with:
-          scan: filesystem                # Explicitly set scan type (filesystem, git, github, etc.)
-          path: .                         # Scan the full repo
-          extra_args: >-                  # Add advanced options
-            --fail=false                  # Do not fail build if secrets found (continue pipeline)
-            --json                        # Output JSON format (easier to parse)
-            --no-verification             # Skip online secret verification for speed
-            --exclude-paths .trufflehogignore
-          
-          
-
+          scan: filesystem
+          path: .
+          extra_args: >-
+            --no-verification        # Skip online secret verification for faster scan
+            --json                   # Output JSON for reporting
+            --fail                   # Fail only if verified secrets found
+            
       #- name: Install TruffleHog CLI
       #  run: |
       #    wget https://github.com/trufflesecurity/trufflehog/releases/download/v3.90.11/trufflehog_3.90.11_linux_amd64.tar.gz -O trufflehog.tar.gz
