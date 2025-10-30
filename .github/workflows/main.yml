@@ -248,42 +248,31 @@ jobs:
           docker push $ECR_URI:${{ env.SHORT_SHA }}
           docker push $ECR_URI:latest
           
-      # OWASP ZAP Scan      
-      - name: Install OWASP ZAP CLI (Full CLI Version)
-        run: |
-          sudo apt update
-          sudo apt install -y wget default-jre
-          wget https://github.com/zaproxy/zaproxy/releases/download/v2.15.0/ZAP_2_15_0_unix.sh
-          sudo bash ZAP_2_15_0_unix.sh -q
-          echo "ZAP Installed Successfully"
-      
-          # Find where zap.sh was installed
-          ZAP_PATH=$(find / -type f -name "zap.sh" 2>/dev/null | head -n 1)
-          echo "Found ZAP at: $ZAP_PATH"
-          echo "ZAP_PATH=$ZAP_PATH" >> $GITHUB_ENV
-      
+      # OWASP ZAP DAST Scan (Docker-based)
       - name: Start Spring Boot App
         run: |
           nohup java -jar target/app.jar > app.log 2>&1 &
           sleep 15
           curl -I http://localhost:8080 || (echo "App failed to start" && exit 1)
       
-      - name: Clean old ZAP processes
-        run: sudo pkill -f zap || true
-  
-      - name: Run OWASP ZAP Quick Scan
+      # Run OWASP ZAP Baseline Scan using official Docker image
+      - name: Run OWASP ZAP DAST Scan
+        timeout-minutes: 5
         run: |
           mkdir -p zap-reports
-          echo "Using ZAP from: $ZAP_PATH"
-          bash "$ZAP_PATH" -cmd \
-            -quickurl http://localhost:8080 \
-            -quickout zap-reports/zap_report.html \
-            -quickprogress \
-            -port 8090 || true
+          echo "Starting ZAP Docker scan..."
+          docker run --rm -v $(pwd):/zap/wrk -t owasp/zap2docker-stable \
+            zap-baseline.py \
+            -t http://host.docker.internal:8080 \
+            -r zap_report.html \
+            -m 3
+          mv zap_report.html zap-reports/zap_report.html
           ls -l zap-reports
       
+      # Upload the ZAP Report as artifact
       - name: Upload ZAP Report
         uses: actions/upload-artifact@v4
         with:
           name: zap-dast-report
           path: zap-reports/zap_report.html
+
