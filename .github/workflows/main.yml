@@ -15,7 +15,11 @@ jobs:
       SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
       NVD_API_KEY: ${{ secrets.NVD_API_KEY }}
       OSSINDEX_USERNAME: ${{ secrets.OSSINDEX_USERNAME }}
-      OSSINDEX_PASSWORD: ${{ secrets.OSSINDEX_PASSWORD }}     
+      OSSINDEX_PASSWORD: ${{ secrets.OSSINDEX_PASSWORD }} 
+      AWS_REGION: us-east-1
+      APP_NAME: java-springboot-app
+      SHORT_SHA: ${{ env.SHORT_SHA }}
+      ECR_REPO_URI: ${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.us-east-1.amazonaws.com/java-springboot-app
 
     steps:
       # Checkout Code
@@ -211,7 +215,7 @@ jobs:
       # aws ecr describe-repositories --repository-names java-springboot-app || aws ecr create-repository --repository-name java-springboot-app
       # aws ecr delete-repository --repository-name java-springboot-app --force          
 
-      # Configure AWS Credentials for ECR
+      # Configure AWS Credentials for ECR/EKS
       - name: Configure AWS Credentials
         uses: aws-actions/configure-aws-credentials@v2
         with:
@@ -267,4 +271,32 @@ jobs:
           fail_action: false                 # if true then -> Fail pipeline on high/medium findings
           artifact_name: 'zap-dast-report'   # Artifact ZIP will be auto-uploaded
           token: ${{ secrets.GITHUB_TOKEN }}
+
+      # Connect kubectl to your EKS cluster
+      - name: Update kubeconfig for EKS
+        run: |
+          aws eks update-kubeconfig \
+            --region $AWS_REGION \
+            --name java-springboot-eks
+
+      # Substitute variables using sed and apply manifest
+      - name: Apply Kubernetes manifests with new image
+        run: |
+          echo "Deploying $APP_NAME using image ${ECR_REPO_URI}:${SHORT_SHA} ..."
+          # Replace placeholders (same logic as Jenkinsfile)
+          sed -i "s|{{IMAGE}}|${ECR_REPO_URI}:${SHORT_SHA}|g" deployment.yaml
+          sed -i "s|{{APP_NAME}}|${APP_NAME}|g" deployment.yaml
+
+          echo "Final manifest:"
+          cat deployment.yaml
+
+          # Apply and verify rollout
+          kubectl apply -f deployment.yaml
+          kubectl rollout status deployment/${APP_NAME} -n default
+          echo "Deployment rollout completed successfully."
+          
+      # Check service endpoint
+      - name: Get Service External IP
+        run: |
+          kubectl get svc $APP_NAME -n default -o wide          
                 
