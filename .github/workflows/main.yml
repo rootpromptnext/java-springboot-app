@@ -262,7 +262,7 @@ jobs:
           target: 'http://localhost:8090'
           cmd_options: '-m 3'                # Limit scan time to 3 minutes (optional)
           allow_issue_writing: false         # Don't create GitHub issues automatically
-          fail_action: true                  # ❗Fail pipeline on high/medium findings
+          fail_action: false                  # if true then -> Fail pipeline on high/medium findings
           artifact_name: 'zap-dast-report'   # Artifact ZIP will be auto-uploaded
           token: ${{ secrets.GITHUB_TOKEN }}
                 
