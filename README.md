@@ -6,8 +6,6 @@ This repository contains a **complete Spring Boot web application** with:
 - Unit and Integration Testing (JUnit + Spring Boot Test)
 - Code Coverage via **JaCoCo**
 - Maven build support (`mvn clean install`)
-- Ready-to-run **executable JAR**
-
 
 
 ## Features
@@ -46,8 +44,6 @@ java-springboot-app/
 └── target/
 
 ````
-
-
 
 ## Getting Started
 
@@ -102,7 +98,6 @@ App runs on:
 | DELETE | `/api/employees/{id}` | Delete employee          |
 
 
-
 ## Test CRUD via `curl`
 
 ```bash
@@ -125,7 +120,6 @@ curl -X PUT -H "Content-Type: application/json" \
 # Delete employee
 curl -X DELETE http://localhost:8080/api/employees/1
 ```
-
 
 ## Testing Summary
 
@@ -188,7 +182,6 @@ docker run -d \
   java-springboot-app
 ```
 
-
 ## Access the Application
 
 Open in browser:
@@ -229,7 +222,7 @@ docker rm java-springboot-app
 
 # Deploy Java Spring Boot App on Kubernetes
 
-This guide explains how to deploy the Docker image **`rootpromptnext/java-springboot-app:v1`** on Kubernetes. The steps work with **MicroK8s, Minikube, Vanilla Kubernetes, or Amazon EKS**.
+The steps work with **MicroK8s, Minikube, Vanilla Kubernetes, or Amazon EKS**.
 
 ## Docker Image Details
 
@@ -239,7 +232,6 @@ This guide explains how to deploy the Docker image **`rootpromptnext/java-spring
 
 > If your Spring Boot app uses a different port, update the Kubernetes manifests accordingly.
 
----
 
 ## Prerequisites
 
@@ -302,6 +294,7 @@ kubectl apply -f deployment.yaml
 ```
 
 ## Access the Application
+<<IP>:<port>/<url>
 
 ## Verify Deployment
 
