@@ -294,7 +294,9 @@ kubectl apply -f deployment.yaml
 ```
 
 ## Access the Application
-<<IP>:<port>/<url>
+```
+http://<VM-IP>:<port> or fqdn
+```
 
 ## Verify Deployment
 
