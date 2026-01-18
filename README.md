@@ -165,8 +165,6 @@ sudo usermod -aG docker jenkins
 sudo usermod -aG docker ubuntu
 sudo usermod -aG docker $USER
 ```
-
-
 ## Build Docker Image
 
 Run this command from the project root:
@@ -228,3 +226,87 @@ multi-stage builds.
 docker stop java-springboot-app
 docker rm java-springboot-app
 ```
+
+# Deploy Java Spring Boot App on Kubernetes
+
+This guide explains how to deploy the Docker image **`rootpromptnext/java-springboot-app:v1`** on Kubernetes. The steps work with **MicroK8s, Minikube, Vanilla Kubernetes, or Amazon EKS**.
+
+## Docker Image Details
+
+* **Image:** `rootpromptnext/java-springboot-app:v1`
+* **Application:** Java Spring Boot
+* **Port (assumed):** `8080`
+
+> If your Spring Boot app uses a different port, update the Kubernetes manifests accordingly.
+
+---
+
+## Prerequisites
+
+Make sure you have:
+
+* Docker (for local testing)
+* One of the following Kubernetes clusters:
+
+  * MicroK8s
+  * Minikube
+  * Vanilla Kubernetes (kubeadm)
+  * Amazon EKS
+* `kubectl` installed and configured
+
+## Microk8s installation
+
+```bash
+#!/bin/bash
+sudo apt-get update -y
+sudo apt-get upgrade -y
+
+sudo apt-get install -y snapd
+
+sudo snap install microk8s --classic --channel=1.28/stable
+
+sudo usermod -aG microk8s $USER
+sudo chown -f -R $USER ~/.kube
+
+newgrp microk8s
+
+microk8s status --wait-ready
+
+microk8s enable dns dashboard storage ingress
+
+sudo snap alias microk8s.kubectl kubectl
+
+microk8s kubectl get nodes
+
+echo "MicroK8s installation completed successfully!"
+```
+
+## Kubectl installation
+```bash
+curl -O https://s3.us-west-2.amazonaws.com/amazon-eks/1.30.0/2024-05-12/bin/linux/amd64/kubectl
+chmod +x kubectl
+sudo mv kubectl /usr/local/bin/
+which kubectl
+kubectl version --client || true
+```
+Verify cluster access:
+
+```bash
+kubectl get nodes
+```
+
+Apply:
+
+```bash
+kubectl apply -f deployment.yaml
+```
+
+## Access the Application
+
+## Verify Deployment
+
+```bash
+kubectl get pods -n java-app
+kubectl logs -f deployment/java-springboot-app -n java-app
+```
+
