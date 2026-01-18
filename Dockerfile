@@ -1,15 +1,30 @@
-# Use a lightweight JDK base image
-FROM eclipse-temurin:17-jdk
+# =========================
+# Build stage
+# =========================
+FROM maven:3.9.6-eclipse-temurin-17 AS build
 
-# Set workdir
 WORKDIR /app
 
-# Accept JAR filename as build argument
-ARG JAR_FILE
-COPY target/${JAR_FILE} app.jar
+# Copy pom.xml first (dependency caching)
+COPY pom.xml .
+RUN mvn -B dependency:go-offline
 
-# Expose port
+# Copy source code
+COPY src ./src
+
+# Build the jar
+RUN mvn clean package -DskipTests
+
+# =========================
+# Runtime stage
+# =========================
+FROM eclipse-temurin:17-jre
+
+WORKDIR /app
+
+# Copy jar from build stage
+COPY --from=build /app/target/java-springboot-app-1.0.0.jar app.jar
+
 EXPOSE 8080
 
-# Run the app
 ENTRYPOINT ["java", "-jar", "app.jar"]
