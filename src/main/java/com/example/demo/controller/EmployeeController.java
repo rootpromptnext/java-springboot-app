@@ -33,8 +33,9 @@ public class EmployeeController {
     return "redirect:/";
   }
 
+  // ✅ FIX: Explicitly specify path variable name
   @GetMapping("/delete/{id}")
-  public String delete(@PathVariable int id) {
+  public String delete(@PathVariable("id") int id) {
     service.delete(id);
     return "redirect:/";
   }
