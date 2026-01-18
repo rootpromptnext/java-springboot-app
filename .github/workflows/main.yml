@@ -3,7 +3,7 @@ name: CI/CD Spring Boot Secure Pipeline
 on:
   workflow_dispatch:      
 
-jobs:
+#jobs:
   build-and-publish:
     runs-on: ubuntu-latest
     env:
