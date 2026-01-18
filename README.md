@@ -1,4 +1,4 @@
-# Java Spring Boot CRUD Application
+# Java Spring Boot Application
 
 This repository contains a **complete Spring Boot web application** with:
 - REST API for CRUD operations
