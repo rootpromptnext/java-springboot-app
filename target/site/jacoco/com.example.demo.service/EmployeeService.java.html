@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>EmployeeService.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">java-springboot-app</a> &gt; <a href="index.source.html" class="el_package">com.example.demo.service</a> &gt; <span class="el_source">EmployeeService.java</span></div><h1>EmployeeService.java</h1><pre class="source lang-java linenums">package com.example.demo.service;
+
+import com.example.demo.model.Employee;
+import org.springframework.stereotype.Service;
+import java.util.*;
+
+@Service
+<span class="fc" id="L8">public class EmployeeService {</span>
+<span class="fc" id="L9">  private final Map&lt;Integer, Employee&gt; employees = new HashMap&lt;&gt;();</span>
+
+  public List&lt;Employee&gt; getAll() {
+<span class="fc" id="L12">    return new ArrayList&lt;&gt;(employees.values());</span>
+  }
+
+  public Employee getById(int id) {
+<span class="nc" id="L16">    return employees.get(id);</span>
+  }
+
+  public void add(Employee emp) {
+<span class="fc" id="L20">    employees.put(emp.getId(), emp);</span>
+<span class="fc" id="L21">  }</span>
+
+  public void update(int id, Employee emp) {
+<span class="nc" id="L24">    employees.put(id, emp);</span>
+<span class="nc" id="L25">  }</span>
+
+  public void delete(int id) {
+<span class="nc" id="L28">    employees.remove(id);</span>
+<span class="nc" id="L29">  }</span>
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.10.202304240956</span></div></body></html>

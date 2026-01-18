@@ -1,0 +1,5 @@
+GROUP,PACKAGE,CLASS,INSTRUCTION_MISSED,INSTRUCTION_COVERED,BRANCH_MISSED,BRANCH_COVERED,LINE_MISSED,LINE_COVERED,COMPLEXITY_MISSED,COMPLEXITY_COVERED,METHOD_MISSED,METHOD_COVERED
+java-springboot-app,com.example.demo.service,EmployeeService,22,24,0,0,5,5,3,3,3,3
+java-springboot-app,com.example.demo.controller,EmployeeController,34,3,0,0,9,1,5,1,5,1
+java-springboot-app,com.example.demo.model,Employee,135,15,24,0,4,2,22,2,10,2
+java-springboot-app,com.example.demo,DemoApplication,5,3,0,0,2,1,1,1,1,1
