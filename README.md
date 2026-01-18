@@ -8,7 +8,7 @@ This repository contains a **complete Spring Boot web application** with:
 - Maven build support (`mvn clean install`)
 - Ready-to-run **executable JAR**
 
----
+
 
 ## Features
 
@@ -21,7 +21,6 @@ This repository contains a **complete Spring Boot web application** with:
 | Frontend | HTML5 + Bootstrap templates |
 | Run Mode | Executable JAR (`java -jar target/java-springboot-app-1.0.0.jar`) |
 
----
 
 ## Project Structure
 
@@ -48,7 +47,7 @@ java-springboot-app/
 
 ````
 
----
+
 
 ## Getting Started
 
@@ -91,7 +90,6 @@ java -jar target/java-springboot-app-1.0.0.jar
 App runs on:
 [http://localhost:8080](http://localhost:8080)
 
----
 
 ## API Endpoints
 
@@ -103,7 +101,7 @@ App runs on:
 | PUT    | `/api/employees/{id}` | Update existing employee |
 | DELETE | `/api/employees/{id}` | Delete employee          |
 
----
+
 
 ## Test CRUD via `curl`
 
@@ -127,7 +125,7 @@ curl -X PUT -H "Content-Type: application/json" \
 # Delete employee
 curl -X DELETE http://localhost:8080/api/employees/1
 ```
----
+
 
 ## Testing Summary
 
@@ -137,7 +135,6 @@ curl -X DELETE http://localhost:8080/api/employees/1
 | Integration Tests | JUnit + MockMvc          | `mvn verify`                    |
 | Coverage          | JaCoCo                   | `target/site/jacoco/index.html` |
 
----
 
 # Java Spring Boot Employee App (Dockerized)
 
@@ -159,7 +156,6 @@ This will:
 * Use Maven inside Docker to build the Spring Boot JAR
 * Create a runnable Docker image
 
----
 
 ## Run the Application
 
@@ -170,7 +166,6 @@ docker run -d \
   java-springboot-app
 ```
 
----
 
 ## Access the Application
 
@@ -185,7 +180,6 @@ or (from another machine):
 ```
 http://<VM-IP>:8080
 ```
-
 
 ## Dockerfile Explanation
 
