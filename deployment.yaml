@@ -16,7 +16,7 @@ spec:
     spec:
       containers:
         - name: java-springboot-app
-          image: java-springboot-app:latest
+          image: rootpromptnext/java-springboot-app:v1
           imagePullPolicy: IfNotPresent
           ports:
             - containerPort: 8080
