@@ -1,6 +1,6 @@
 # Java Spring Boot Application
 
-This repository contains a **complete Spring Boot web application** with:
+This repository contains a **complete a Spring Boot web application** with:
 - REST API for CRUD operations
 - Bootstrap-based HTML UI
 - Unit and Integration Testing (JUnit + Spring Boot Test)
