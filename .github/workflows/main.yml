@@ -1,10 +1,10 @@
 name: CI/CD Spring Boot Secure Pipeline
 
 on:
-  workflow_dispatch:      
+  #workflow_dispatch:      
 
 #jobs:
-  build-and-publish:
+  #build-and-publish:
     runs-on: ubuntu-latest
     env:
       AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
