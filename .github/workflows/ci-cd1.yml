@@ -40,5 +40,5 @@ jobs:
       - name: Deploy to Kubernetes
         run: |
           id
-          ls -ld .kube
+          pwd
           kubectl apply -f deployment.yaml
