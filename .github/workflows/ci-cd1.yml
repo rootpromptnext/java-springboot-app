@@ -20,8 +20,8 @@ jobs:
 
       - name: Docker Login (using GitHub Secrets)
         run: |
-          echo "${{ secrets.DOCKER_PASSWORD }}" | docker login \
-            -u "${{ secrets.DOCKER_USERNAME }}" \
+          echo "${{ secrets.DOCKERHUB_USER }}" | docker login \
+            -u "${{ secrets.DOCKERHUB_PASS }}" \
             --password-stdin
 
       - name: Build & Push Docker Image
