@@ -7,7 +7,7 @@ jobs:
   build-push-deploy:
     runs-on: ubuntu-latest
     # use self-hosted if deploying to MicroK8s
-    # runs-on: self-hosted
+    runs-on: self-hosted
 
     env:
       IMAGE_NAME: rootpromptnext/java-springboot-app
