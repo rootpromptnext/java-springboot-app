@@ -12,7 +12,7 @@ jobs:
     env:
       IMAGE_NAME: rootpromptnext/java-springboot-app
       DOCKER_USER: rootpromptnext
-      DOCKER_PASS: dckr_pat_q54Ua00h82H7xPWcry2AjFxEc1I   # lab only
+      DOCKER_PASS:   # lab only
 
     steps:
       - name: Checkout source code
