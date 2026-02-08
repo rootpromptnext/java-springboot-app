@@ -5,14 +5,10 @@ on:
 
 jobs:
   build-push-deploy:
-    # runs-on: ubuntu-latest
-    # use self-hosted if deploying to MicroK8s
     runs-on: self-hosted
 
     env:
       IMAGE_NAME: rootpromptnext/java-springboot-app
-      DOCKER_USER: rootpromptnext
-      DOCKER_PASS:   # lab only
 
     steps:
       - name: Checkout source code
@@ -22,9 +18,11 @@ jobs:
         run: |
           git rev-parse --short HEAD > short_sha.txt
 
-      - name: Docker Login
+      - name: Docker Login (using GitHub Secrets)
         run: |
-          echo "$DOCKER_PASS" | docker login -u "$DOCKER_USER" --password-stdin
+          echo "${{ secrets.DOCKER_PASSWORD }}" | docker login \
+            -u "${{ secrets.DOCKER_USERNAME }}" \
+            --password-stdin
 
       - name: Build & Push Docker Image
         run: |
@@ -39,6 +37,5 @@ jobs:
 
       - name: Deploy to Kubernetes
         run: |
-          id
-          pwd
+          kubectl get nodes
           kubectl apply -f deployment.yaml
