@@ -1,0 +1,42 @@
+name: java-spring-boot-app githubactions
+
+on:
+  workflow_dispatch:
+
+jobs:
+  build-push-deploy:
+    runs-on: ubuntu-latest
+    # use self-hosted if deploying to MicroK8s
+    # runs-on: self-hosted
+
+    env:
+      IMAGE_NAME: rootpromptnext/java-springboot-app
+      DOCKER_USER: rootpromptnext
+      DOCKER_PASS: dckr_pat_q54Ua00h82H7xPWcry2AjFxEc1I   # lab only
+
+    steps:
+      - name: Checkout source code
+        uses: actions/checkout@v4
+
+      - name: Create short commit SHA
+        run: |
+          git rev-parse --short HEAD > short_sha.txt
+
+      - name: Docker Login
+        run: |
+          echo "$DOCKER_PASS" | docker login -u "$DOCKER_USER" --password-stdin
+
+      - name: Build & Push Docker Image
+        run: |
+          SHORT_SHA=$(cat short_sha.txt)
+
+          docker build -t java-springboot-app:$SHORT_SHA .
+          docker tag java-springboot-app:$SHORT_SHA $IMAGE_NAME:$SHORT_SHA
+          docker tag java-springboot-app:$SHORT_SHA $IMAGE_NAME:latest
+
+          docker push $IMAGE_NAME:$SHORT_SHA
+          docker push $IMAGE_NAME:latest
+
+      - name: Deploy to Kubernetes
+        run: |
+          kubectl apply -f deployment.yaml
