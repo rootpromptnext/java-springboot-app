@@ -1,9 +1,17 @@
-name: CI/CD Spring Boot Secure Pipeline
+name: CI/CD Spring Boot Secure Pipeline - EKS
 
 on:
-  #workflow_dispatch:      
+  push:
+    branches:
+      - main
+      - master
+  pull_request:
+    branches:
+      - main
+      - master
+  workflow_dispatch:       
 
-#jobs:
+jobs:
   #build-and-publish:
     runs-on: ubuntu-latest
     env:
