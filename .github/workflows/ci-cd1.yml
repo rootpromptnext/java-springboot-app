@@ -1,4 +1,4 @@
-name: java-spring-boot-app githubactions
+name: App Deployment - Microk8s
 
 on:
   workflow_dispatch:
