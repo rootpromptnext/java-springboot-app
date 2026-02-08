@@ -1,4 +1,4 @@
-name: CI/CD Spring Boot Secure Pipeline - EKS
+name: App Deployment - EKS
 
 on:
   push:
