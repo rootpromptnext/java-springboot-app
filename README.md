@@ -301,7 +301,6 @@ http://<VM-IP>:<port> or fqdn
 ## Verify Deployment
 
 ```bash
-kubectl get pods -n java-app
-kubectl logs -f deployment/java-springboot-app -n java-app
+kubectl get all
 ```
 
