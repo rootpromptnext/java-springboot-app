@@ -7,6 +7,8 @@ This repository contains a **complete a Spring Boot web application** with:
 - Code Coverage via **JaCoCo**
 - Maven build support (`mvn clean install`)
 
+  
+
 
 ## Features
 
