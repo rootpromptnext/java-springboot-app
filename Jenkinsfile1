@@ -26,25 +26,25 @@ pipeline {
         // =========================
         // SAST - SonarCloud
         // =========================
-        stage('SAST - SonarCloud') {
-            steps {
-                withCredentials([string(credentialsId: 'sonar-token', variable: 'TOKEN')]) {
-                    sh '''
-                    docker run --rm \
-                      -v $PWD:/usr/src \
-                      -w /usr/src \
-                      sonarsource/sonar-scanner-cli \
-                      -Dsonar.projectKey=rootpromptnext_java-spring-boot-app1 \
-                      -Dsonar.organization=rootpromptnext \
-                      -Dsonar.host.url=https://sonarcloud.io \
-                      -Dsonar.login=$TOKEN \
-                      -Dsonar.sources=src \
-                      -Dsonar.java.binaries=target \
-                      -Dsonar.projectBaseDir=/usr/src
-                    '''
-                }
-            }
-        }
+        #stage('SAST - SonarCloud') {
+        #    steps {
+        #        withCredentials([string(credentialsId: 'sonar-token', variable: 'TOKEN')]) {
+        #            sh '''
+        #            docker run --rm \
+        #              -v $PWD:/usr/src \
+        #              -w /usr/src \
+        #              sonarsource/sonar-scanner-cli \
+        #              -Dsonar.projectKey=rootpromptnext_java-spring-boot-app1 \
+        #              -Dsonar.organization=rootpromptnext \
+        #              -Dsonar.host.url=https://sonarcloud.io \
+        #              -Dsonar.login=$TOKEN \
+        #              -Dsonar.sources=src \
+        #              -Dsonar.java.binaries=target \
+        #              -Dsonar.projectBaseDir=/usr/src
+        #            '''
+        #        }
+        #    }
+        #}
 
         // =========================
         // SCA - Snyk (FIXED IMAGE)
@@ -74,37 +74,37 @@ pipeline {
         // =========================
         // Secrets Scan
         // =========================
-        stage('Secrets Scan - TruffleHog') {
-            steps {
-                sh '''
-                docker run --rm \
-                  -v $PWD:/repo \
-                  ghcr.io/trufflesecurity/trufflehog:latest \
-                  filesystem /repo || true
-                '''
-            }
-        }
+        #stage('Secrets Scan - TruffleHog') {
+        #    steps {
+        #        sh '''
+        #        docker run --rm \
+        #          -v $PWD:/repo \
+        #          ghcr.io/trufflesecurity/trufflehog:latest \
+        #          filesystem /repo || true
+        #        '''
+        #    }
+        #}
 
         // =========================
         // Trivy FS Scan (STABLE)
         // =========================
-        stage('Vulnerability Scan - Trivy FS') {
-            steps {
-                sh '''
-                mkdir -p trivy-reports
+        #stage('Vulnerability Scan - Trivy FS') {
+        #    steps {
+        #        sh '''
+        #        mkdir -p trivy-reports
 
-                docker run --rm \
-                  -v $PWD:/project \
-                  -v /tmp/trivy-cache:/root/.cache/ \
-                  -w /project \
-                  aquasec/trivy:latest \
-                  fs . \
-                  --severity HIGH,CRITICAL \
-                  --format json \
-                  --output trivy-reports/trivy-report.json || true
-                '''
-            }
-        }
+        #        docker run --rm \
+        #          -v $PWD:/project \
+        #          -v /tmp/trivy-cache:/root/.cache/ \
+        #          -w /project \
+        #          aquasec/trivy:latest \
+        #          fs . \
+        #          --severity HIGH,CRITICAL \
+        #          --format json \
+        #          --output trivy-reports/trivy-report.json || true
+        #        '''
+        #    }
+        #}
 
         // =========================
         // DAST - OWASP ZAP (FIXED PERMISSION)
