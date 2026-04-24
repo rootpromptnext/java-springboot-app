@@ -1,61 +1,177 @@
 pipeline {
     agent any
 
-    environment {
-        IMAGE_NAME = "rootpromptnext/java-springboot-app"
-    }
-
     stages {
 
-        stage('Clone Repo') {
+        // =========================
+        // Checkout
+        // =========================
+        stage('Checkout Repo') {
+            steps {
+                git url: 'https://github.com/rootpromptnext/java-spring-boot-app1', branch: 'main'
+            }
+        }
+
+        // =========================
+        // Build (Required for scans)
+        // =========================
+        stage('Build Maven App') {
             steps {
                 sh '''
-                rm -rf java-springboot-app
-                git clone https://github.com/rootpromptnext/java-springboot-app.git
+                mvn clean package -DskipTests
                 '''
             }
         }
 
-        stage('Create Short Commit SHA') {
+        // =========================
+        // SAST - SonarCloud
+        // =========================
+        stage('SAST - SonarCloud') {
             steps {
-                sh '''
-                cd java-springboot-app
-                git rev-parse --short HEAD > short_sha.txt
-                '''
-            }
-        }
-
-        stage('Build & Push Docker Image') {
-            steps {
-                withCredentials([usernamePassword(
-                    credentialsId: 'dockerhub-creds',
-                    usernameVariable: 'DOCKER_USER',
-                    passwordVariable: 'DOCKER_PASS'
-                )]) {
+                withCredentials([string(credentialsId: 'sonar-token', variable: 'TOKEN')]) {
                     sh '''
-                    cd java-springboot-app
-                    SHORT_SHA=$(cat short_sha.txt)
-
-                    echo "$DOCKER_PASS" | docker login -u "$DOCKER_USER" --password-stdin
-
-                    docker build -t java-springboot-app:$SHORT_SHA .
-                    docker tag java-springboot-app:$SHORT_SHA $IMAGE_NAME:$SHORT_SHA
-                    docker tag java-springboot-app:$SHORT_SHA $IMAGE_NAME:latest
-
-                    docker push $IMAGE_NAME:$SHORT_SHA
-                    docker push $IMAGE_NAME:latest
+                    docker run --rm \
+                      -v $PWD:/usr/src \
+                      -w /usr/src \
+                      sonarsource/sonar-scanner-cli \
+                      -Dsonar.projectKey=rootpromptnext_java-spring-boot-app1 \
+                      -Dsonar.organization=rootpromptnext \
+                      -Dsonar.host.url=https://sonarcloud.io \
+                      -Dsonar.login=$TOKEN \
+                      -Dsonar.sources=src \
+                      -Dsonar.java.binaries=target \
+                      -Dsonar.projectBaseDir=/usr/src
                     '''
                 }
             }
         }
 
-        stage('Deploy to Kubernetes') {
+        // =========================
+        // SCA - Snyk (FIXED IMAGE)
+        // =========================
+        stage('SCA - Snyk') {
+            steps {
+                withCredentials([string(credentialsId: 'snyk-token', variable: 'SNYK_TOKEN')]) {
+                    sh '''
+                    docker run --rm \
+                      -e SNYK_TOKEN=$SNYK_TOKEN \
+                      -v $PWD:/app \
+                      -w /app \
+                      snyk/snyk:docker \
+                      snyk test --file=pom.xml --skip-unresolved --json > snyk-report.json || true
+
+                    docker run --rm \
+                      -e SNYK_TOKEN=$SNYK_TOKEN \
+                      -v $PWD:/app \
+                      -w /app \
+                      snyk/snyk:docker \
+                      snyk monitor --file=pom.xml --skip-unresolved || true
+                    '''
+                }
+            }
+        }
+
+        // =========================
+        // Secrets Scan
+        // =========================
+        stage('Secrets Scan - TruffleHog') {
             steps {
                 sh '''
-                cd java-springboot-app
-                kubectl apply -f deployment.yaml
+                docker run --rm \
+                  -v $PWD:/repo \
+                  ghcr.io/trufflesecurity/trufflehog:latest \
+                  filesystem /repo || true
                 '''
             }
+        }
+
+        // =========================
+        // Trivy FS Scan (STABLE)
+        // =========================
+        stage('Vulnerability Scan - Trivy FS') {
+            steps {
+                sh '''
+                mkdir -p trivy-reports
+
+                docker run --rm \
+                  -v $PWD:/project \
+                  -v /tmp/trivy-cache:/root/.cache/ \
+                  -w /project \
+                  aquasec/trivy:latest \
+                  fs . \
+                  --severity HIGH,CRITICAL \
+                  --format json \
+                  --output trivy-reports/trivy-report.json || true
+                '''
+            }
+        }
+
+        // =========================
+        // DAST - OWASP ZAP (FIXED PERMISSION)
+        // =========================
+        stage('DAST - OWASP ZAP') {
+            steps {
+                sh '''
+                mkdir -p zap-reports
+                chmod -R 777 zap-reports
+
+                docker run --rm \
+                  -u $(id -u):$(id -g) \
+                  -v $PWD/zap-reports:/zap/wrk \
+                  -t ghcr.io/zaproxy/zaproxy:stable \
+                  zap-baseline.py \
+                  -t http://learning.rootpromptnext.com \
+                  -r zap-report.html || true
+                '''
+            }
+        }
+    }
+
+    // =========================
+    // POST ACTIONS
+    // =========================
+    post {
+
+        always {
+            archiveArtifacts artifacts: 'zap-reports/*.*, snyk-report.json, trivy-reports/*.json', allowEmptyArchive: true
+        }
+
+        success {
+            emailext(
+                subject: "✅ DevSecOps Pipeline Success: ${JOB_NAME} #${BUILD_NUMBER}",
+                body: """
+                <h2>All Security Scans Passed</h2>
+
+                <p><b>Job:</b> ${JOB_NAME}</p>
+                <p><b>Build:</b> #${BUILD_NUMBER}</p>
+
+                <p><a href="${BUILD_URL}">View Build</a></p>
+                <p><a href="${BUILD_URL}artifact/">Download Reports</a></p>
+                """,
+                mimeType: 'text/html',
+                to: "prayag.rhce@gmail.com"
+            )
+        }
+
+        failure {
+            emailext(
+                subject: "❌ DevSecOps Pipeline Failed: ${JOB_NAME} #${BUILD_NUMBER}",
+                body: """
+                <h2>Security Pipeline Failed</h2>
+
+                <p><b>Job:</b> ${JOB_NAME}</p>
+                <p><b>Build:</b> #${BUILD_NUMBER}</p>
+
+                <p><b>Console:</b><br>
+                <a href="${BUILD_URL}console">${BUILD_URL}console</a></p>
+
+                <p><b>Artifacts:</b><br>
+                <a href="${BUILD_URL}artifact/">${BUILD_URL}artifact/</a></p>
+                """,
+                mimeType: 'text/html',
+                attachmentsPattern: 'zap-reports/*.html',
+                to: "prayag.rhce@gmail.com"
+            )
         }
     }
 }
