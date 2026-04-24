@@ -64,7 +64,7 @@ pipeline {
                       -e SNYK_TOKEN=$SNYK_TOKEN \
                       -v $PWD:/app \
                       -w /app \
-                      snyk/snyk:docker \
+                      snyk/snyk:maven \
                       snyk monitor --file=pom.xml --skip-unresolved || true
                     '''
                 }
