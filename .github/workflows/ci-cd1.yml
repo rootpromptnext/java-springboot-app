@@ -24,14 +24,22 @@ jobs:
             -u "${{ secrets.DOCKERHUB_USER }}" \
             --password-stdin
 
-      - name: Build & Push Docker Image
+      - name: Build Docker Image
         run: |
           SHORT_SHA=$(cat short_sha.txt)
-
           docker build -t java-springboot-app:$SHORT_SHA .
+      
+      - name: Tag Docker Image
+        run: |
+          SHORT_SHA=$(cat short_sha.txt)
+      
           docker tag java-springboot-app:$SHORT_SHA $IMAGE_NAME:$SHORT_SHA
           docker tag java-springboot-app:$SHORT_SHA $IMAGE_NAME:latest
-
+      
+      - name: Push Docker Image
+        run: |
+          SHORT_SHA=$(cat short_sha.txt)
+      
           docker push $IMAGE_NAME:$SHORT_SHA
           docker push $IMAGE_NAME:latest
 
