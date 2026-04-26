@@ -67,7 +67,7 @@ pipeline {
         stage('Update deployment.yaml') {
             steps {
                 sh '''
-                sed -i "s|image:.*|image: $FULL_IMAGE:$BUILD_TAG|g" deployment.yaml
+                sed -i "s|image: rootpromptnext/java-springboot-app:v1|image: $IMAGE_NAME:$SHORT_SHA|g" deployment.yaml
                 '''
             }
         }
