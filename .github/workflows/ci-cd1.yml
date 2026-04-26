@@ -43,6 +43,13 @@ jobs:
           docker push $IMAGE_NAME:$SHORT_SHA
           docker push $IMAGE_NAME:latest
 
+
+      - name: Update Kubernetes Deployment Image
+        run: |
+          SHORT_SHA=$(cat short_sha.txt)
+      
+          sed -i "s|image: rootpromptnext/java-springboot-app:v1|image: $IMAGE_NAME:$SHORT_SHA|g" deployment.yaml
+
       - name: Deploy to Kubernetes
         run: |
           kubectl get nodes
