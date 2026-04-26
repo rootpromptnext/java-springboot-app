@@ -3,7 +3,7 @@ pipeline {
 
     environment {
         DOCKERHUB_USERNAME = "rootpromptnext"
-        IMAGE_NAME = "java-springboot-app1"
+        IMAGE_NAME = "java-springboot-app"
 
         BUILD_TAG = "${BUILD_NUMBER}"
         LATEST_TAG = "latest"
