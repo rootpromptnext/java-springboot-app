@@ -13,18 +13,12 @@ pipeline {
 
     stages {
 
-        // =========================
-        // Checkout
-        // =========================
         stage('Checkout Repo') {
             steps {
                 git url: 'https://github.com/rootpromptnext/java-springboot-app', branch: 'main'
             }
         }
 
-        // =========================
-        // Build App
-        // =========================
         stage('Build Maven App (Docker)') {
             steps {
                 sh '''
@@ -38,9 +32,6 @@ pipeline {
             }
         }
 
-        // =========================
-        // Build Docker Image
-        // =========================
         stage('Build Docker Image') {
             steps {
                 sh '''
@@ -50,9 +41,6 @@ pipeline {
             }
         }
 
-        // =========================
-        // Login to Docker Hub
-        // =========================
         stage('Login to Docker Hub') {
             steps {
                 withCredentials([usernamePassword(
@@ -67,9 +55,6 @@ pipeline {
             }
         }
 
-        // =========================
-        // Push Image
-        // =========================
         stage('Push to Docker Hub') {
             steps {
                 sh '''
@@ -79,9 +64,6 @@ pipeline {
             }
         }
 
-        // =========================
-        // Update Deployment
-        // =========================
         stage('Update deployment.yaml') {
             steps {
                 sh '''
@@ -90,9 +72,6 @@ pipeline {
             }
         }
 
-        // =========================
-        // Deploy to Kubernetes
-        // =========================
         stage('Deploy to Kubernetes') {
             steps {
                 withCredentials([file(credentialsId: 'kubeconfig', variable: 'KUBECONFIG')]) {
@@ -105,9 +84,6 @@ pipeline {
         }
     }
 
-    // =========================
-    // SIMPLE POST
-    // =========================
     post {
         always {
             echo "Pipeline completed: ${JOB_NAME} #${BUILD_NUMBER}"
