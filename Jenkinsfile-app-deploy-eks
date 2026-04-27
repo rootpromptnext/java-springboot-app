@@ -1,0 +1,99 @@
+pipeline {
+    agent any
+
+    environment {
+        AWS_REGION = "us-east-1"
+        AWS_ACCOUNT_ID = "426063972414"
+
+        IMAGE_NAME = "java-springboot-app"
+
+        BUILD_TAG = "${BUILD_NUMBER}"
+        LATEST_TAG = "latest"
+
+        ECR_REPO = "${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_REGION}.amazonaws.com/${IMAGE_NAME}"
+    }
+
+    stages {
+
+        stage('Checkout Repo') {
+            steps {
+                git url: 'https://github.com/rootpromptnext/java-springboot-app', branch: 'main'
+            }
+        }
+
+        stage('Build Maven App (Docker)') {
+            steps {
+                sh '''
+                docker run --rm \
+                  -u $(id -u):$(id -g) \
+                  -v $PWD:/app \
+                  -w /app \
+                  maven:3.9.9-eclipse-temurin-17 \
+                  mvn clean package -DskipTests
+                '''
+            }
+        }
+
+        stage('Build Docker Image') {
+            steps {
+                sh '''
+                docker build -t $IMAGE_NAME:$BUILD_TAG .
+                docker tag $IMAGE_NAME:$BUILD_TAG $ECR_REPO:$BUILD_TAG
+                docker tag $IMAGE_NAME:$BUILD_TAG $ECR_REPO:$LATEST_TAG
+                '''
+            }
+        }
+
+        stage('Login to AWS ECR') {
+            steps {
+                withCredentials([[
+                    $class: 'AmazonWebServicesCredentialsBinding',
+                    credentialsId: 'aws-creds'
+                ]]) {
+                    sh '''
+                    aws ecr get-login-password --region $AWS_REGION \
+                    | docker login --username AWS --password-stdin $AWS_ACCOUNT_ID.dkr.ecr.$AWS_REGION.amazonaws.com
+                    '''
+                }
+            }
+        }
+
+        stage('Push to ECR') {
+            steps {
+                sh '''
+                docker push $ECR_REPO:$BUILD_TAG
+                docker push $ECR_REPO:$LATEST_TAG
+                '''
+            }
+        }
+
+        stage('Update deployment.yaml') {
+            steps {
+                sh '''
+                sed -i "s|image: .*|image: ${ECR_REPO}:${BUILD_TAG}|g" deployment.yaml
+                '''
+            }
+        }
+
+        stage('Deploy to EKS') {
+            steps {
+                withCredentials([[
+                    $class: 'AmazonWebServicesCredentialsBinding',
+                    credentialsId: 'aws-creds'
+                ]]) {
+                    sh '''
+                    aws eks update-kubeconfig --region $AWS_REGION --name my-eks-cluster
+
+                    kubectl apply -f deployment.yaml
+                    '''
+                }
+            }
+        }
+    }
+
+    post {
+        always {
+            echo "Pipeline completed: ${JOB_NAME} #${BUILD_NUMBER}"
+        }
+    }
+}
