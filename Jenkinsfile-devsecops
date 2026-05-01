@@ -10,7 +10,7 @@ pipeline {
 
         stage('Clone Repository') {
             steps {
-                git branch: 'main', url: 'https://github.com/rootpromptnext/java-spring-boot-app1.git'
+                git branch: 'main', url: 'https://github.com/rootpromptnext/java-spring-boot-app.git'
             }
         }
 
