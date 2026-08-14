@@ -1,3 +1,9 @@
+# Project Overview
+
+<p align="center">
+  <img src="ci-cd-iac-project-overview.png" alt="CI/CD and Terraform Infrastructure Architecture" width="1200">
+</p>
+
 # Java Spring Boot Application
 
 This repository contains a **complete a Spring Boot web application** with:
