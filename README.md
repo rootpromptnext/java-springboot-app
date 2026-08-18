@@ -12,9 +12,7 @@ This repository contains a **complete a Spring Boot web application** with:
 - Unit and Integration Testing (JUnit + Spring Boot Test)
 - Code Coverage via **JaCoCo**
 - Maven build support (`mvn clean install`)
-
-  
-
+- Maven test
 
 ## Features
 
