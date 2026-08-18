@@ -1,38 +1,40 @@
 <project xmlns="http://maven.apache.org/POM/4.0.0"
          xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0
          http://maven.apache.org/xsd/maven-4.0.0.xsd">
+
   <modelVersion>4.0.0</modelVersion>
+
   <groupId>com.example</groupId>
   <artifactId>java-springboot-app</artifactId>
   <version>1.0.0</version>
   <packaging>jar</packaging>
 
   <name>java-springboot-app</name>
-  <description>Spring Boot CRUD Application with Unit, Integration, and Jacoco coverage</description>
+  <description>Spring Boot CRUD Application with Prometheus Monitoring, Unit, Integration, and Jacoco coverage</description>
 
   <properties>
-    <!-- Match your system JDK -->
     <java.version>21</java.version>
     <spring.boot.version>3.2.5</spring.boot.version>
   </properties>
 
   <dependencies>
-    <!-- [Spring Boot Web](ca://s?q=Spring_Boot_Web_dependency) -->
+
+    <!-- Spring Boot Web -->
     <dependency>
       <groupId>org.springframework.boot</groupId>
       <artifactId>spring-boot-starter-web</artifactId>
       <version>${spring.boot.version}</version>
     </dependency>
 
-    <!-- [Thymeleaf](ca://s?q=Spring_Boot_Thymeleaf_dependency) -->
+    <!-- Thymeleaf -->
     <dependency>
       <groupId>org.springframework.boot</groupId>
       <artifactId>spring-boot-starter-thymeleaf</artifactId>
       <version>${spring.boot.version}</version>
     </dependency>
 
-    <!-- [Lombok](ca://s?q=Lombok_dependency) -->
+    <!-- Lombok -->
     <dependency>
       <groupId>org.projectlombok</groupId>
       <artifactId>lombok</artifactId>
@@ -40,18 +42,34 @@
       <scope>provided</scope>
     </dependency>
 
-    <!-- [Spring Boot Test](ca://s?q=Spring_Boot_Test_dependency) -->
+    <!-- Spring Boot Actuator -->
+    <dependency>
+      <groupId>org.springframework.boot</groupId>
+      <artifactId>spring-boot-starter-actuator</artifactId>
+      <version>${spring.boot.version}</version>
+    </dependency>
+
+    <!-- Prometheus Micrometer Registry -->
+    <dependency>
+      <groupId>io.micrometer</groupId>
+      <artifactId>micrometer-registry-prometheus</artifactId>
+      <version>1.12.5</version>
+    </dependency>
+
+    <!-- Spring Boot Test -->
     <dependency>
       <groupId>org.springframework.boot</groupId>
       <artifactId>spring-boot-starter-test</artifactId>
       <version>${spring.boot.version}</version>
       <scope>test</scope>
     </dependency>
+
   </dependencies>
 
   <build>
     <plugins>
-      <!-- [Spring Boot Plugin](ca://s?q=Spring_Boot_Maven_plugin) -->
+
+      <!-- Spring Boot Maven Plugin -->
       <plugin>
         <groupId>org.springframework.boot</groupId>
         <artifactId>spring-boot-maven-plugin</artifactId>
@@ -65,14 +83,14 @@
         </executions>
       </plugin>
 
-      <!-- [Maven Compiler Plugin](ca://s?q=Maven_Compiler_plugin_with_release_21) -->
+      <!-- Maven Compiler Plugin -->
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-compiler-plugin</artifactId>
         <version>3.11.0</version>
         <configuration>
-          <!-- Use your actual JDK version -->
           <release>${java.version}</release>
+
           <annotationProcessorPaths>
             <path>
               <groupId>org.projectlombok</groupId>
@@ -83,7 +101,7 @@
         </configuration>
       </plugin>
 
-      <!-- [Surefire Plugin](ca://s?q=Maven_Surefire_plugin) -->
+      <!-- Surefire Plugin -->
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-surefire-plugin</artifactId>
@@ -95,7 +113,7 @@
         </configuration>
       </plugin>
 
-      <!-- [Failsafe Plugin](ca://s?q=Maven_Failsafe_plugin) -->
+      <!-- Failsafe Plugin -->
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-failsafe-plugin</artifactId>
@@ -115,17 +133,19 @@
         </configuration>
       </plugin>
 
-      <!-- [JaCoCo Plugin](ca://s?q=Jacoco_Maven_plugin) -->
+      <!-- JaCoCo -->
       <plugin>
         <groupId>org.jacoco</groupId>
         <artifactId>jacoco-maven-plugin</artifactId>
         <version>0.8.10</version>
         <executions>
+
           <execution>
             <goals>
               <goal>prepare-agent</goal>
             </goals>
           </execution>
+
           <execution>
             <id>report</id>
             <phase>verify</phase>
@@ -133,9 +153,11 @@
               <goal>report</goal>
             </goals>
           </execution>
+
         </executions>
       </plugin>
 
     </plugins>
   </build>
+
 </project>
