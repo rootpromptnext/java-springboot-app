@@ -615,7 +615,7 @@ curl http://localhost:8080/api/employees
 
 ---
 
-# 8. Docker
+# 8.1 Docker
 
 The project contains a multi-stage Dockerfile.
 
@@ -679,6 +679,234 @@ Remove:
 
 ```bash
 docker rm java-springboot-app
+```
+
+Yes — **we should explicitly document the Docker Compose deployment of all 3 containers**. Your existing README mentions it, but it doesn't clearly explain that the Compose stack starts:
+
+```text
+Spring Boot Application :8080
+        │
+        ▼
+   Prometheus :9090
+        │
+        ▼
+    Grafana :3000
+```
+
+And your actual `monitoring/docker-compose.yaml` contains all three services.
+
+# 8.2 Docker Compose - Spring Boot + Prometheus + Grafana
+
+The repository includes a Docker Compose configuration that runs the complete application monitoring stack.
+
+The stack contains three containers:
+
+```text
+                    Docker Compose
+                         │
+          ┌──────────────┼──────────────┐
+          │              │              │
+          ▼              ▼              ▼
+   Spring Boot       Prometheus      Grafana
+      :8080             :9090          :3000
+          │               ▲
+          │               │
+          └───────────────┘
+           /actuator/prometheus
+````
+
+Compose configuration:
+
+```text
+monitoring/docker-compose.yaml
+```
+
+Prometheus configuration:
+
+```text
+monitoring/prometheus/prometheus.yml
+```
+
+## Start the Complete Stack
+
+From the project root:
+
+```bash
+docker compose -f monitoring/docker-compose.yaml up -d --build
+```
+
+This builds and starts:
+
+```text
+springboot-app
+prometheus
+grafana
+```
+
+## Check Running Containers
+
+```bash
+docker ps
+```
+
+You should see the three containers running.
+
+## Check Spring Boot Application
+
+Open:
+
+```text
+http://localhost:8080
+```
+
+Test the REST API:
+
+```bash
+curl http://localhost:8080/api/employees
+```
+
+Test Actuator:
+
+```bash
+curl http://localhost:8080/actuator/health
+```
+
+Test Prometheus metrics:
+
+```bash
+curl http://localhost:8080/actuator/prometheus
+```
+
+## Check Prometheus
+
+Open:
+
+```text
+http://localhost:9090
+```
+
+Check Prometheus targets:
+
+```bash
+curl http://localhost:9090/api/v1/targets
+```
+
+Or:
+
+```bash
+curl -s http://localhost:9090/api/v1/targets | python3 -m json.tool
+```
+
+The Spring Boot target should be:
+
+```text
+UP
+```
+
+Prometheus scrapes the Spring Boot application using:
+
+```text
+http://springboot-app:8080/actuator/prometheus
+```
+
+## Check Grafana
+
+Open:
+
+```text
+http://localhost:3000
+```
+
+Grafana uses Prometheus as its datasource.
+
+Inside the Grafana container, configure the Prometheus datasource as:
+
+```text
+http://prometheus:9090
+```
+
+Example PromQL queries:
+
+```promql
+jvm_memory_used_bytes
+```
+
+```promql
+jvm_threads_live_threads
+```
+
+```promql
+process_cpu_usage
+```
+
+```promql
+http_server_requests_seconds_count
+```
+
+## Check Container Logs
+
+Spring Boot:
+
+```bash
+docker logs springboot-app
+```
+
+Prometheus:
+
+```bash
+docker logs prometheus
+```
+
+Grafana:
+
+```bash
+docker logs grafana
+```
+
+Follow Spring Boot logs:
+
+```bash
+docker logs -f springboot-app
+```
+
+## Stop the Stack
+
+```bash
+docker compose -f monitoring/docker-compose.yaml down
+```
+
+## Stop and Remove Volumes
+
+```bash
+docker compose -f monitoring/docker-compose.yaml down -v
+```
+
+## Docker Compose Verification Flow
+
+```text
+docker compose up
+        │
+        ├── Spring Boot
+        │      │
+        │      └── :8080
+        │
+        ├── Prometheus
+        │      │
+        │      └── :9090
+        │
+        └── Grafana
+               │
+               └── :3000
+
+Spring Boot
+     │
+     │ /actuator/prometheus
+     ▼
+Prometheus
+     │
+     │ PromQL
+     ▼
+Grafana
 ```
 
 # 9. Kubernetes Deployment
