@@ -17,7 +17,6 @@
 
 </p>
 
-
 # Project Overview
 
 This repository contains a complete **Java Spring Boot Employee Management application** designed as a practical **DevOps / DevSecOps / Kubernetes / Observability lab**.
@@ -97,8 +96,37 @@ Current application functionality:
 * Bootstrap frontend
 * Unit testing
 * Integration testing
+* REST CRUD operations
 
----
+# REST API
+
+The application exposes a RESTful Employee API:
+
+```text
+/api/employees
+```
+
+Supported operations:
+
+```text
+GET     /api/employees
+GET     /api/employees/{id}
+POST    /api/employees
+PUT     /api/employees/{id}
+DELETE  /api/employees/{id}
+```
+
+The API uses JSON request and response bodies.
+
+Example Employee:
+
+```json
+{
+  "id": 1,
+  "name": "Alice",
+  "role": "DevOps Engineer"
+}
+```
 
 # Technology Stack
 
@@ -121,7 +149,6 @@ Current application functionality:
 | Metrics Storage         | Prometheus                                           |
 | Visualization           | Grafana                                              |
 | Automation              | GitHub Actions                                       |
-
 
 # Repository Structure
 
@@ -223,6 +250,92 @@ git clone https://github.com/rootpromptnext/java-springboot-app.git
 cd java-springboot-app
 ```
 
+## Manual Compile, Package and Test Workflow
+
+Before running Docker, Kubernetes, Jenkins or any CI/CD pipeline, you can manually verify the application locally.
+
+### Step 1: Compile the Source Code
+
+```bash
+mvn compile
+```
+
+This verifies that the Java source code can be compiled successfully.
+
+### Step 2: Run Tests
+
+```bash
+mvn test
+```
+
+This executes the configured Maven test lifecycle.
+
+### Step 3: Package the Application
+
+```bash
+mvn package
+```
+
+The generated JAR will be available under:
+
+```text
+target/java-springboot-app-1.0.0.jar
+```
+
+### Step 4: Clean Build
+
+For a clean build:
+
+```bash
+mvn clean package
+```
+
+This removes the previous `target/` directory, compiles the source code, runs tests and creates the Spring Boot JAR.
+
+### Step 5: Complete Verification
+
+```bash
+mvn clean verify
+```
+
+This runs the complete Maven verification lifecycle, including the configured JaCoCo reporting.
+
+### Step 6: Run the Generated JAR
+
+```bash
+java -jar target/java-springboot-app-1.0.0.jar
+```
+
+Application:
+
+```text
+http://localhost:8080
+```
+
+### Recommended Manual Workflow
+
+```text
+Source Code
+    │
+    ▼
+mvn compile
+    │
+    ▼
+mvn test
+    │
+    ▼
+mvn package
+    │
+    ▼
+mvn clean verify
+    │
+    ▼
+Spring Boot JAR
+    │
+    ▼
+java -jar
+```
+
 Build:
 
 ```bash
@@ -269,6 +382,8 @@ Run:
 mvn verify
 ```
 
+> The project currently contains `IntegrationTest.java`. The Maven Failsafe configuration is configured for `*IT.java` naming, so the integration test should be verified against the actual Maven test lifecycle if Failsafe-specific execution is required.
+
 # 4. JaCoCo Code Coverage
 
 JaCoCo is integrated into Maven.
@@ -313,43 +428,194 @@ http://localhost:8080
 
 # 6. Application Endpoints
 
-### Employee UI
+## Employee UI
 
 ```text
-/
+GET /
 ```
 
-### Add Employee
+## Add Employee Form
 
 ```text
-/form
+GET /form
 ```
 
-### Add Employee API
+## REST API
 
-```text
-POST /add
-```
-
-### Delete Employee
-
-```text
-/delete/{id}
-```
-
-### REST API
+Base path:
 
 ```text
 /api/employees
 ```
 
-Test:
+### Get All Employees
+
+```text
+GET /api/employees
+```
+
+### Get Employee by ID
+
+```text
+GET /api/employees/{id}
+```
+
+### Create Employee
+
+```text
+POST /api/employees
+```
+
+### Update Employee
+
+```text
+PUT /api/employees/{id}
+```
+
+### Delete Employee
+
+```text
+DELETE /api/employees/{id}
+```
+
+---
+
+# 7. REST API CRUD Testing
+
+Make sure the application is running:
+
+```bash
+mvn spring-boot:run
+```
+
+Or:
+
+```bash
+java -jar target/java-springboot-app-1.0.0.jar
+```
+
+## 7.1 Create Employee
+
+```bash
+curl -X POST http://localhost:8080/api/employees \
+  -H "Content-Type: application/json" \
+  -d '{"id":1,"name":"Alice","role":"DevOps Engineer"}'
+```
+
+Expected response:
+
+```json
+{
+  "id": 1,
+  "name": "Alice",
+  "role": "DevOps Engineer"
+}
+```
+
+Create another employee:
+
+```bash
+curl -X POST http://localhost:8080/api/employees \
+  -H "Content-Type: application/json" \
+  -d '{"id":2,"name":"Bob","role":"Cloud Engineer"}'
+```
+
+## 7.2 Get All Employees
 
 ```bash
 curl http://localhost:8080/api/employees
 ```
 
-# 7. Docker
+Example response:
+
+```json
+[
+  {
+    "id": 1,
+    "name": "Alice",
+    "role": "DevOps Engineer"
+  },
+  {
+    "id": 2,
+    "name": "Bob",
+    "role": "Cloud Engineer"
+  }
+]
+```
+
+## 7.3 Get Employee by ID
+
+```bash
+curl http://localhost:8080/api/employees/1
+```
+
+Expected:
+
+```json
+{
+  "id": 1,
+  "name": "Alice",
+  "role": "DevOps Engineer"
+}
+```
+
+## 7.4 Update Employee
+
+```bash
+curl -X PUT http://localhost:8080/api/employees/1 \
+  -H "Content-Type: application/json" \
+  -d '{"name":"Alice Updated","role":"Senior DevOps Engineer"}'
+```
+
+Expected:
+
+```json
+{
+  "id": 1,
+  "name": "Alice Updated",
+  "role": "Senior DevOps Engineer"
+}
+```
+
+The ID remains `1` because the REST endpoint identifies the employee using:
+
+```text
+PUT /api/employees/1
+```
+
+## 7.5 Delete Employee
+
+```bash
+curl -X DELETE http://localhost:8080/api/employees/1
+```
+
+Expected HTTP status:
+
+```text
+204 No Content
+```
+
+## 7.6 Verify Deletion
+
+```bash
+curl http://localhost:8080/api/employees/1
+```
+
+Expected HTTP status:
+
+```text
+404 Not Found
+```
+
+## 7.7 Verify All Employees
+
+```bash
+curl http://localhost:8080/api/employees
+```
+
+---
+
+# 8. Docker
 
 The project contains a multi-stage Dockerfile.
 
@@ -397,6 +663,12 @@ Application:
 http://localhost:8080
 ```
 
+REST API:
+
+```bash
+curl http://localhost:8080/api/employees
+```
+
 Stop:
 
 ```bash
@@ -409,7 +681,7 @@ Remove:
 docker rm java-springboot-app
 ```
 
-# 8. Kubernetes Deployment
+# 9. Kubernetes Deployment
 
 Kubernetes manifest:
 
@@ -443,7 +715,7 @@ Check everything:
 kubectl get all
 ```
 
-# 9. MicroK8s Deployment
+# 10. MicroK8s Deployment
 
 The application can be deployed to MicroK8s.
 
@@ -475,7 +747,7 @@ kubectl get pods
 kubectl get svc
 ```
 
-# 10. Amazon EKS Deployment
+# 11. Amazon EKS Deployment
 
 The repository also contains a Jenkins pipeline for EKS:
 
@@ -501,7 +773,7 @@ Jenkins
       EKS
 ```
 
-# 11. Jenkins CI/CD
+# 12. Jenkins CI/CD
 
 Jenkins pipelines included in this repository:
 
@@ -563,7 +835,7 @@ Developer
     └── Kubernetes Deployment
 ```
 
-# 12. DevSecOps
+# 13. DevSecOps
 
 The repository contains:
 
@@ -608,7 +880,7 @@ Registry
 Kubernetes
 ```
 
-# 13. Prometheus Monitoring
+# 14. Prometheus Monitoring
 
 Spring Boot monitoring is implemented using:
 
@@ -672,10 +944,9 @@ disk_total_bytes
 
 Detailed monitoring instructions:
 
-# 14. Prometheus + Grafana
+# 15. Prometheus + Grafana
 
-```
-
+```text
                 Docker Compose
                      │
         ┌────────────┼────────────┐
@@ -720,7 +991,7 @@ prometheus
 grafana
 ```
 
-# 15. Test Prometheus
+# 16. Test Prometheus
 
 Prometheus:
 
@@ -754,7 +1025,7 @@ curl -s \
 | python3 -m json.tool
 ```
 
-# 16. Grafana
+# 17. Grafana
 
 Grafana:
 
@@ -788,7 +1059,7 @@ process_cpu_usage
 http_server_requests_seconds_count
 ```
 
-# 17. Observability Roadmap
+# 18. Observability Roadmap
 
 The monitoring implementation starts with traditional Spring Boot + Micrometer monitoring.
 
@@ -836,7 +1107,7 @@ This repository can therefore be used to demonstrate:
 * Grafana dashboards
 * Distributed observability
 
-# 18. GitHub Actions Self-Hosted Runner
+# 19. GitHub Actions Self-Hosted Runner
 
 The repository can also be deployed using a GitHub Actions self-hosted runner.
 
@@ -879,7 +1150,6 @@ For MicroK8s:
 sudo usermod -aG microk8s github
 ```
 
-
 # Quick Verification
 
 After cloning the repository:
@@ -888,7 +1158,25 @@ After cloning the repository:
 cd java-springboot-app
 ```
 
-Build:
+Compile:
+
+```bash
+mvn compile
+```
+
+Run tests:
+
+```bash
+mvn test
+```
+
+Package:
+
+```bash
+mvn package
+```
+
+Complete verification:
 
 ```bash
 mvn clean verify
@@ -900,16 +1188,50 @@ Run:
 mvn spring-boot:run
 ```
 
-Test:
+Test Actuator:
 
 ```bash
 curl http://localhost:8080/actuator/health
 ```
 
-Test API:
+Test REST API:
 
 ```bash
 curl http://localhost:8080/api/employees
+```
+
+Create employee:
+
+```bash
+curl -X POST http://localhost:8080/api/employees \
+  -H "Content-Type: application/json" \
+  -d '{"id":1,"name":"Alice","role":"DevOps Engineer"}'
+```
+
+Get employee:
+
+```bash
+curl http://localhost:8080/api/employees/1
+```
+
+Update employee:
+
+```bash
+curl -X PUT http://localhost:8080/api/employees/1 \
+  -H "Content-Type: application/json" \
+  -d '{"name":"Alice Updated","role":"Senior DevOps Engineer"}'
+```
+
+Delete employee:
+
+```bash
+curl -X DELETE http://localhost:8080/api/employees/1
+```
+
+Verify deletion:
+
+```bash
+curl http://localhost:8080/api/employees/1
 ```
 
 Build Docker:
@@ -971,22 +1293,25 @@ This repository is designed to demonstrate the following progression:
 04. JaCoCo
           │
           ▼
-05. Docker
+05. REST API
           │
           ▼
-06. Kubernetes
+06. Docker
           │
           ▼
-07. Jenkins CI/CD
+07. Kubernetes
           │
           ▼
-08. DevSecOps
+08. Jenkins CI/CD
           │
           ▼
-09. Prometheus
+09. DevSecOps
           │
           ▼
-10. Grafana
+10. Prometheus
+          │
+          ▼
+11. Grafana
           │
           ▼
 ```
@@ -1026,16 +1351,12 @@ CI/CD
 Monitoring
 ```
 
----
-
 # 👨‍💻 Author
 
 **Prayag Sangode**
 Senior Technical Architect
 
 DevOps | AWS | Kubernetes | CI/CD | DevSecOps | Observability | AIOps
-
----
 
 # ⭐ Repository
 
@@ -1044,4 +1365,3 @@ If this project is useful for your DevOps learning journey, consider starring th
 ```text
 https://github.com/rootpromptnext/java-springboot-app
 ```
-
