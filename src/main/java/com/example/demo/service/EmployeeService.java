@@ -2,29 +2,49 @@ package com.example.demo.service;
 
 import com.example.demo.model.Employee;
 import org.springframework.stereotype.Service;
-import java.util.*;
+
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 @Service
 public class EmployeeService {
-  private final Map<Integer, Employee> employees = new HashMap<>();
 
-  public List<Employee> getAll() {
-    return new ArrayList<>(employees.values());
-  }
+    private final Map<Integer, Employee> employees = new HashMap<>();
 
-  public Employee getById(int id) {
-    return employees.get(id);
-  }
+    public List<Employee> getAll() {
+        return new ArrayList<>(employees.values());
+    }
 
-  public void add(Employee emp) {
-    employees.put(emp.getId(), emp);
-  }
+    public Employee getById(int id) {
+        return employees.get(id);
+    }
 
-  public void update(int id, Employee emp) {
-    employees.put(id, emp);
-  }
+    public Employee add(Employee employee) {
+        employees.put(employee.getId(), employee);
+        return employee;
+    }
 
-  public void delete(int id) {
-    employees.remove(id);
-  }
+    public Employee update(int id, Employee employee) {
+
+        if (!employees.containsKey(id)) {
+            return null;
+        }
+
+        employee.setId(id);
+        employees.put(id, employee);
+
+        return employee;
+    }
+
+    public boolean delete(int id) {
+
+        if (!employees.containsKey(id)) {
+            return false;
+        }
+
+        employees.remove(id);
+        return true;
+    }
 }
