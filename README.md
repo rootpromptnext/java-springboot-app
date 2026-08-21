@@ -241,6 +241,11 @@ Expected:
 openjdk version "21..."
 ```
 
+Install mvn:
+```
+sudo apt update && sudo apt install maven
+```
+
 Verify Maven:
 
 ```bash
