@@ -223,6 +223,12 @@ Install:
 * kubectl
 * Kubernetes cluster if deploying to Kubernetes
 
+Install Java:
+```bash
+sudo apt update
+sudo apt install -y openjdk-21-jdk
+```
+
 Verify Java:
 
 ```bash
